@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="93fbd9ce-0d4f-4d8f-9db1-6fd3ca404c53" >
+		<file:connection workingDir="E:\Workspace 4.0 latest\batch-1\src\main\resources\input" />
+	</file:config>
+	<flow name="batch-1Flow1" doc:id="bac23eff-773b-43b6-8b68-765847f909bf" >
+		<file:listener doc:name="On New or Updated File" doc:id="59e20b57-f720-46d3-875d-4c3a20f77675" config-ref="File_Config" directory="E:\Workspace 4.0 latest\batch-1\src\main\resources\input" moveToDirectory="E:\Workspace 4.0 latest\batch-1\src\main\resources\output" renameTo="#[attributes.filename ++ now().day]">
+			<scheduling-strategy>
+				<fixed-frequency timeUnit="SECONDS" />
+			</scheduling-strategy>
+			<file:matcher filenamePattern="**CSV" />
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="3a60f559-ce5c-4c85-83d5-a6dd4107366f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[sizeOf(payload)]" doc:name="Set Variable" doc:id="923920f4-8afc-4fd9-bcba-23490bf57c13" variableName="size"/>
+		<batch:job jobName="batch-1Batch_Job" doc:id="3935e2b1-f263-4b55-940b-2c8915f8b59d" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="913197b6-6ba8-4963-b357-e9dc9395b11c" >
+					<set-variable value="#[payload.Name]" doc:name="Set Variable" doc:id="eb734de4-199e-4479-868d-97a0c071016c" variableName="name"/>
+					<logger level="INFO" doc:name="Logger" doc:id="fcc016f9-8afd-4c12-8804-fe57a4e57008" message="#[vars.name]"/>
+				</batch:step>
+				<batch:step name="Batch_Step1" doc:id="aaafd770-b162-4923-8540-4c3cf4694246" >
+					<logger level="INFO" doc:name="Logger" doc:id="e978950b-dc43-4461-9839-bdff6bd1d5af" message="#[vars.size]"/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="73d95969-df2c-4003-813e-2cab1117d76b" message="#[payload.successfulRecords]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
